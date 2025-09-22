@@ -53,9 +53,9 @@ end
 
 
 function isColliding(guiObject0, guiObject1)		
-	if not guiObject0:IsA("GuiObject") or not guiObject1:IsA("GuiObject") then 
-		warn("Arguments must be GuiObjects")
-		return false
+	if not typeof(guiObject0) == "Instance" or not typeof(guiObject1) == "Instance" then 
+		error("argument must be an instance") 
+		return 
 	end
 
 	local ap1 = guiObject0.AbsolutePosition
@@ -120,46 +120,68 @@ local function draggable(obj,extern,parented)
 	globals.dragging=nil
 	globals.uiorigin=nil
 	globals.morigin=nil
-	local dragConnection
-	local moveConnection
 	obj.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and souid == false then
-			if obj.ZIndex >= index or obj.ZIndex < index then
-				souid = true
-				index = obj.ZIndex				
-				obj.Parent = PCR_1
 
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and souid == false and obj.ZIndex >= index then
+			souid = true
+
+			index = obj.ZIndex				
+			obj.Parent = PCR_1
+
+			globals.dragging = true
+			globals.uiorigin = obj.Position
+			globals.morigin = input.Position
+
+			local connection 
+			connection = input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					globals.dragging = false
+					souid = false
+					connection:Disconnect()
+					if extern then
+						if isColliding(parented,obj)  then
+							obj.Position = UDim2.new(0.5,0,0.5,0)
+							obj.Parent = parented
+
+						end
+					end
+				end
+			end)
+		else
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and souid==false and obj.ZIndex < index then
+				obj.Parent = PCR_1
+				souid = true
+				index = obj.ZIndex
 				globals.dragging = true
 				globals.uiorigin = obj.Position
 				globals.morigin = input.Position
-
-				dragConnection = input.Changed:Connect(function()
+				local connection 
+				connection = input.Changed:Connect(function()
 					if input.UserInputState == Enum.UserInputState.End then
 						globals.dragging = false
 						souid = false
-						dragConnection:Disconnect()
-						if extern and parented then
-							if isColliding(parented,obj)  then
-								obj.Position = UDim2.new(0.5,0,0.5,0)
-								obj.Parent = parented
-							end
+						connection:Disconnect()
+						if isColliding(obj,obj.Section)  then
+							obj = obj.Section
 						end
 					end
 				end)
 			end
 		end
 	end)
-	moveConnection = RunService.RenderStepped:Connect(function()
-		if globals.dragging then
-			local inputPos = uis:GetMouseLocation()
-			local change = inputPos - globals.morigin
+	uis.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement and globals.dragging then
+			if extern then
+				if isColliding(obj,parented) then
+					TweenService:Create(parented , TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(19, 26, 35)}):Play()	
+				else
+					TweenService:Create(parented , TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(20,20,20)}):Play()	
+				end
+			end
+			local change = input.Position - globals.morigin
 			obj.Position = UDim2.new(globals.uiorigin.X.Scale,globals.uiorigin.X.Offset+change.X,globals.uiorigin.Y.Scale,globals.uiorigin.Y.Offset+change.Y)
 		end
 	end)
-	return function()
-		if moveConnection then moveConnection:Disconnect() end
-		if dragConnection then dragConnection:Disconnect() end
-	end
 end
 
 
@@ -417,7 +439,7 @@ function OpenedColor(text,ColourDisplay,Action,def)
 		COLORPALLETE.Visible = false
 
 		pcall(function()
-            Action( Color3.fromRGB(ColourDisplayBIG.ImageColor3.R * 255 ,ColourDisplayBIG.ImageColor3.G * 255 ,ColourDisplayBIG.ImageColor3.B* 255) )
+            Action( Color3.fromRGB(ColourDisplayBIG.ImageColor3.R * 200 ,ColourDisplayBIG.ImageColor3.G * 200 ,ColourDisplayBIG.ImageColor3.B* 200) )
         end)
 
 	end)
@@ -598,7 +620,7 @@ WEBSITE.Position = UDim2.new(0.177174687, 0, 0.499190629, 0)
 WEBSITE.Size = UDim2.new(0, 197, 0, 23)
 WEBSITE.ZIndex = 3
 WEBSITE.Font = Enum.Font.ArialBold
-WEBSITE.Text = "Vigil.lol" 
+WEBSITE.Text = "Nexor" 
 WEBSITE.TextColor3 = Color3.fromRGB(199, 199, 199)
 WEBSITE.TextSize = 14.000
 WEBSITE.TextXAlignment = Enum.TextXAlignment.Left
@@ -613,7 +635,7 @@ LABEL2.Position = UDim2.new(0.795508027, 0, 0.455712378, 0)
 LABEL2.Size = UDim2.new(0, 197, 0, 23)
 LABEL2.ZIndex = 3
 LABEL2.Font = Enum.Font.ArialBold
-LABEL2.Text = "Beta Release"
+LABEL2.Text = "Alpha"
 LABEL2.TextColor3 = Color3.fromRGB(199, 199, 199)
 LABEL2.TextSize = 14.000
 LABEL2.TextXAlignment = Enum.TextXAlignment.Right
@@ -735,7 +757,7 @@ function AddRipple(button,ael,ayo)
 
 	local mouse = game.Players.LocalPlayer:GetMouse()
 
-	local background = button:WaitForChild("Background", 1) or Background -- Fallback to new Background
+	local background = button:WaitForChild("Background")
 
 	local active = false
 	local hovering = false
@@ -761,7 +783,7 @@ function AddRipple(button,ael,ayo)
 
 		local backgroundFadeOut = TweenService:Create(ael, tweenInfo, {TextColor3 = Color3.fromRGB(197, 197, 197)})
 
-		repeat task.wait() until not hovering
+		repeat wait() until not hovering
 
 		backgroundFadeOut:Play()
 	end
@@ -877,13 +899,13 @@ function library:AddWatermark(Text)
 			if not val then
 				can = not can
 				obj1.Visible = true
-				task.wait(.5)
+				wait(.5)
 				can = not can
 			else
 				can = not can
 
 				obj1.Visible =false
-				task.wait(.5)
+				wait(.5)
 				can = not can
 			end
 		end
@@ -2228,14 +2250,6 @@ function library:AddWindow(text)
 						Callback()
 					end)
 				end)
-			end)
-			AddRipple(Interactive, TextLabel, Color3.fromRGB(197, 197, 197))
-			Interactive.MouseEnter:Connect(function()
-				TweenService:Create(UIStroke , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Color = Color3.fromRGB(115, 115, 115)}):Play()
-			end)
-			Interactive.MouseLeave:Connect(function()
-				TweenService:Create(UIStroke , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Color = Color3.fromRGB(52, 52, 52)}):Play()
-
 			end)
 			SECTIONHOLDER.Size = UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 8) + UDim2.new(0,0,0,23)
 			_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset , 0 ,LIST.AbsoluteContentSize.Y + 15);
