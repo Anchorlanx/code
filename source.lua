@@ -174,8 +174,6 @@ local colorPickerSingleton = nil
 
 function OpenedColor(text, ColourDisplay, Action, def)
 	if colorPickerSingleton then
-		colorPickerSingleton.Visible = true
-		-- Update text if needed
 		colorPickerSingleton.Upper.TEMPLATETITLE20202.Text = text
 	else
 		local COLORPALLETE = Instance.new("Frame")
@@ -200,6 +198,11 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		local TEMPLATETITLE20202 = Instance.new("TextLabel")
 		local linedecoupper = Instance.new("Frame")
 		local RESETALL = Instance.new("ImageButton")
+		local UICornerBG = Instance.new("UICorner")
+		local UICornerS12 = Instance.new("UICorner")
+		local UICornerDarkness = Instance.new("UICorner")
+		local UICornerS13 = Instance.new("UICorner")
+		local UICornerColourBig = Instance.new("UICorner")
 
 		RESETALL.Name = "RESETALL"
 		RESETALL.Parent = S13
@@ -225,7 +228,7 @@ function OpenedColor(text, ColourDisplay, Action, def)
 
 		ANIMATEFRAME01.Name = "ANIMATEFRAME01"
 		ANIMATEFRAME01.Parent = COLORPALLETE
-		COLORPALLETE.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ANIMATEFRAME01.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		ANIMATEFRAME01.Position = UDim2.new(-0.0257352963, 0, -0.00666669384, 0)
 		ANIMATEFRAME01.Size = UDim2.new(0, 285, 0, 159)
 		ANIMATEFRAME01.ZIndex = 99
@@ -246,6 +249,9 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		BG.Position = UDim2.new(0, 0, 0.157927245, 0)
 		BG.Size = UDim2.new(0, 272, 0, 125)
 
+		UICornerBG.CornerRadius = UDim.new(0, 4)
+		UICornerBG.Parent = BG
+
 		S12.Name = "S12"
 		S12.Parent = BG
 		S12.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
@@ -253,6 +259,9 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		S12.Position = UDim2.new(0, 16, 0, 7)
 		S12.Size = UDim2.new(0, 156, 0, 107)
 		S12.ZIndex = 23
+
+		UICornerS12.CornerRadius = UDim.new(0, 4)
+		UICornerS12.Parent = S12
 
 		ColourWheel.Name = "ColourWheel"
 		ColourWheel.Parent = S12
@@ -299,6 +308,9 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		DarknessPicker.SliceCenter = Rect.new(100, 100, 100, 100)
 		DarknessPicker.SliceScale = 0.120
 
+		UICornerDarkness.CornerRadius = UDim.new(0, 4)
+		UICornerDarkness.Parent = DarknessPicker
+
 		UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 0, 0))}
 		UIGradient.Rotation = 90
 		UIGradient.Parent = DarknessPicker
@@ -329,6 +341,9 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		S13.Size = UDim2.new(0, 79, 0, 109)
 		S13.ZIndex = 23
 
+		UICornerS13.CornerRadius = UDim.new(0, 4)
+		UICornerS13.Parent = S13
+
 		SDFH.Name = "SDFH"
 		SDFH.Parent = S13
 
@@ -344,6 +359,9 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		ColourDisplayBIG.ScaleType = Enum.ScaleType.Slice
 		ColourDisplayBIG.SliceCenter = Rect.new(100, 100, 100, 100)
 		ColourDisplayBIG.SliceScale = 0.120
+
+		UICornerColourBig.CornerRadius = UDim.new(0, 4)
+		UICornerColourBig.Parent = ColourDisplayBIG
 
 		UIAspectRatioConstraint_3.Parent = ColourDisplayBIG
 
@@ -390,8 +408,93 @@ function OpenedColor(text, ColourDisplay, Action, def)
 		linedecoupper.Size = UDim2.new(0.961130738, 0, 0, 1)
 		linedecoupper.ZIndex = 3
 
-		colorPickerSingleton = COLORPALLETE
+		local hsv
+
+		local buttonDown = false
+		local movingSlider = false
+
+		local function updateColour(centreOfWheel)
+			local colourPickerCentre = Vector2.new(
+				colorPickerSingleton.BG.S12.ColourWheel.Picker.AbsolutePosition.X + (colorPickerSingleton.BG.S12.ColourWheel.Picker.AbsoluteSize.X / 2),
+				colorPickerSingleton.BG.S12.ColourWheel.Picker.AbsolutePosition.Y + (colorPickerSingleton.BG.S12.ColourWheel.Picker.AbsoluteSize.Y / 2)
+			)
+			local h = (math.pi - math.atan2(colourPickerCentre.Y - centreOfWheel.Y, colourPickerCentre.X - centreOfWheel.X)) / (math.pi * 2)
+			local s = (centreOfWheel - colourPickerCentre).Magnitude / (colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.X / 2)
+			local v = math.abs((colorPickerSingleton.BG.S12.DarknessPicker.Slider.AbsolutePosition.Y - colorPickerSingleton.BG.S12.DarknessPicker.AbsolutePosition.Y) / colorPickerSingleton.BG.S12.DarknessPicker.AbsoluteSize.Y - 1)
+
+			hsv = Color3.fromHSV(math.clamp(h, 0, 1), math.clamp(s, 0, 1), math.clamp(v, 0, 1))
+
+			colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3 = hsv
+			colorPickerSingleton.BG.S12.DarknessPicker.UIGradient.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, hsv), 
+				ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
+			}
+		end
+
+		colorPickerSingleton.BG.S13.SETCOLOR.MouseButton1Click:Connect(function()
+			colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(-0.026,0,-0.007,0),'Out','Quint',0.2,true)
+			task.wait(0.2)
+			colorPickerSingleton.BackgroundTransparency = 1
+			colorPickerSingleton.Holder.Visible = false
+			colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(1.077,0,-0.007,0),'Out','Quint',0.2,true)
+			task.wait(0.2)
+			colorPickerSingleton.ANIMATEFRAME01.Visible = false
+			ColourDisplay.ImageColor3 = colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3
+			colorPickerSingleton.Visible = false
+
+			pcall(function()
+				Action(Color3.fromRGB(colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3.R * 255, colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3.G * 255, colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3.B * 255))
+			end)
+		end)
+
+		colorPickerSingleton.BG.S13.RESETALL.MouseButton1Click:Connect(function()
+			colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(-0.026,0,-0.007,0),'Out','Quint',0.2,true)
+			task.wait(0.2)
+			colorPickerSingleton.BackgroundTransparency = 1
+			colorPickerSingleton.Holder.Visible = false
+			colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(1.077,0,-0.007,0),'Out','Quint',0.2,true)
+			task.wait(0.2)
+			colorPickerSingleton.Visible = false
+			colorPickerSingleton.ANIMATEFRAME01.Visible = false
+		end)
+
+		colorPickerSingleton.BG.S12.ColourWheel.MouseButton1Down:Connect(function()
+			buttonDown = true
+		end)
+
+		colorPickerSingleton.BG.S12.DarknessPicker.MouseButton1Down:Connect(function()
+			movingSlider = true
+		end)
+
+		uis.InputEnded:Connect(function(input)
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			buttonDown = false
+			movingSlider = false
+		end)
+
+		uis.InputChanged:Connect(function(input)
+			if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+
+			local mousePos = uis:GetMouseLocation() - Vector2.new(0, game:GetService("GuiService"):GetGuiInset().Y)
+			local centreOfWheel = Vector2.new(colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.X + (colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.X / 2), colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.Y + (colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.Y / 2))
+			local distanceFromWheel = (mousePos - centreOfWheel).Magnitude
+
+			if distanceFromWheel <= colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.X / 2 and buttonDown then
+				colorPickerSingleton.BG.S12.ColourWheel.Picker.Position = UDim2.new(0, mousePos.X - colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.X, 0, mousePos.Y - colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.Y)
+			elseif movingSlider then
+				colorPickerSingleton.BG.S12.DarknessPicker.Slider.Position = UDim2.new(colorPickerSingleton.BG.S12.DarknessPicker.Slider.Position.X.Scale, 0, 0, 
+					math.clamp(
+						mousePos.Y - colorPickerSingleton.BG.S12.DarknessPicker.AbsolutePosition.Y, 
+						0, 
+						colorPickerSingleton.BG.S12.DarknessPicker.AbsoluteSize.Y)
+				)	
+			end
+
+			updateColour(centreOfWheel)
+		end)
+
 		draggable(COLORPALLETE)
+		colorPickerSingleton = COLORPALLETE
 	end
 
 	if colorPickerSingleton.Visible then
@@ -420,38 +523,21 @@ function OpenedColor(text, ColourDisplay, Action, def)
 	task.wait(0.2)
 	colorPickerSingleton.ANIMATEFRAME01.Position = UDim2.new(-1.085,0,-0.013,0)
 
-	local hsv
-
-	colorPickerSingleton.BG.S13.SETCOLOR.MouseButton1Click:Connect(function()
-		colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(-0.026,0,-0.007,0),'Out','Quint',0.2,true)
-		task.wait(0.2)
-		colorPickerSingleton.BackgroundTransparency = 1
-		colorPickerSingleton.Holder.Visible = false
-		colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(1.077,0,-0.007,0),'Out','Quint',0.2,true)
-		task.wait(0.2)
-		colorPickerSingleton.ANIMATEFRAME01.Visible = false
-		ColourDisplay.ImageColor3 = colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3
-		colorPickerSingleton.Visible = false
-
-		pcall(function()
-			Action(Color3.fromRGB(colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3.R * 255, colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3.G * 255, colorPickerSingleton.BG.S13.ColourDisplayBIG.ImageColor3.B * 255))
-		end)
-	end)
-
-	colorPickerSingleton.BG.S13.RESETALL.MouseButton1Click:Connect(function()
-		colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(-0.026,0,-0.007,0),'Out','Quint',0.2,true)
-		task.wait(0.2)
-		colorPickerSingleton.BackgroundTransparency = 1
-		colorPickerSingleton.Holder.Visible = false
-		colorPickerSingleton.ANIMATEFRAME01:TweenPosition(UDim2.new(1.077,0,-0.007,0),'Out','Quint',0.2,true)
-		task.wait(0.2)
-		colorPickerSingleton.Visible = false
-		colorPickerSingleton.ANIMATEFRAME01.Visible = false
-	end)
-
-	local buttonDown = false
-	local movingSlider = false
-
+	local wheel = colorPickerSingleton.BG.S12.ColourWheel
+	local picker = wheel.Picker
+	local dark = colorPickerSingleton.BG.S12.DarknessPicker
+	local slider = dark.Slider
+	local centreOfWheel = Vector2.new(wheel.AbsolutePosition.X + wheel.AbsoluteSize.X / 2, wheel.AbsolutePosition.Y + wheel.AbsoluteSize.Y / 2)
+	local wheelSize = wheel.AbsoluteSize.X
+	local h, s, v = def:ToHSV()
+	local radius = (wheelSize / 2) * s
+	local theta = math.pi - 2 * math.pi * h
+	local dx = radius * math.cos(theta)
+	local dy = radius * math.sin(theta)
+	local centerX = wheelSize / 2
+	local centerY = wheelSize / 2
+	picker.Position = UDim2.new(0, centerX + dx, 0, centerY + dy)
+	slider.Position = UDim2.new(slider.Position.X.Scale, 0, 0, dark.AbsoluteSize.Y * (1 - v))
 	local function updateColour(centreOfWheel)
 		local colourPickerCentre = Vector2.new(
 			colorPickerSingleton.BG.S12.ColourWheel.Picker.AbsolutePosition.X + (colorPickerSingleton.BG.S12.ColourWheel.Picker.AbsoluteSize.X / 2),
@@ -469,41 +555,7 @@ function OpenedColor(text, ColourDisplay, Action, def)
 			ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 		}
 	end
-
-	colorPickerSingleton.BG.S12.ColourWheel.MouseButton1Down:Connect(function()
-		buttonDown = true
-	end)
-
-	colorPickerSingleton.BG.S12.DarknessPicker.MouseButton1Down:Connect(function()
-		movingSlider = true
-	end)
-
-	uis.InputEnded:Connect(function(input)
-		if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-		buttonDown = false
-		movingSlider = false
-	end)
-
-	uis.InputChanged:Connect(function(input)
-		if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-
-		local mousePos = uis:GetMouseLocation() - Vector2.new(0, game:GetService("GuiService"):GetGuiInset().Y)
-		local centreOfWheel = Vector2.new(colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.X + (colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.X / 2), colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.Y + (colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.Y / 2))
-		local distanceFromWheel = (mousePos - centreOfWheel).Magnitude
-
-		if distanceFromWheel <= colorPickerSingleton.BG.S12.ColourWheel.AbsoluteSize.X / 2 and buttonDown then
-			colorPickerSingleton.BG.S12.ColourWheel.Picker.Position = UDim2.new(0, mousePos.X - colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.X, 0, mousePos.Y - colorPickerSingleton.BG.S12.ColourWheel.AbsolutePosition.Y)
-		elseif movingSlider then
-			colorPickerSingleton.BG.S12.DarknessPicker.Slider.Position = UDim2.new(colorPickerSingleton.BG.S12.DarknessPicker.Slider.Position.X.Scale, 0, 0, 
-				math.clamp(
-					mousePos.Y - colorPickerSingleton.BG.S12.DarknessPicker.AbsolutePosition.Y, 
-					0, 
-					colorPickerSingleton.BG.S12.DarknessPicker.AbsoluteSize.Y)
-			)	
-		end
-
-		updateColour(centreOfWheel)
-	end)
+	updateColour(centreOfWheel)
 end
 
 local MAIN = Instance.new("Frame")
@@ -584,7 +636,7 @@ WEBSITE.Position = UDim2.new(0.177174687, 0, 0.499190629, 0)
 WEBSITE.Size = UDim2.new(0, 197, 0, 23)
 WEBSITE.ZIndex = 3
 WEBSITE.Font = Enum.Font.ArialBold
-WEBSITE.Text = "NerdsInc.gq" 
+WEBSITE.Text = "Vigil.lol" 
 WEBSITE.TextColor3 = Color3.fromRGB(199, 199, 199)
 WEBSITE.TextSize = 14.000
 WEBSITE.TextXAlignment = Enum.TextXAlignment.Left
@@ -599,7 +651,7 @@ LABEL2.Position = UDim2.new(0.795508027, 0, 0.455712378, 0)
 LABEL2.Size = UDim2.new(0, 197, 0, 23)
 LABEL2.ZIndex = 3
 LABEL2.Font = Enum.Font.ArialBold
-LABEL2.Text = "Alpha build / ∞ days left"
+LABEL2.Text = "Alpha"
 LABEL2.TextColor3 = Color3.fromRGB(199, 199, 199)
 LABEL2.TextSize = 14.000
 LABEL2.TextXAlignment = Enum.TextXAlignment.Right
@@ -1345,8 +1397,8 @@ function library:AddWindow(text)
 			local obj6 = Instance.new("Frame", obj5)
 			obj6.BackgroundColor3 = Color3.new(1, 1, 1)
 			obj6.BorderSizePixel = 0
-			obj6.Position = UDim2.new(-0.001646191, 0, 0, 0)
-			obj6.Size = UDim2.fromScale(DefaultScale, 1)
+			obj6.Position = UDim2.new(0, 0, 0, 0)
+			obj6.Size = UDim2.new(DefaultScale, 0, 1, 0)
 			obj6.ZIndex = 23
 			obj6.Name = [[SFrame]]
 
@@ -1370,7 +1422,7 @@ function library:AddWindow(text)
 						obj4.Text = tostring(Value)
 					end
 					local DefaultScale = (Value - Min) / (Max - Min)
-					obj6.Size = UDim2.fromScale(DefaultScale, 1)
+					obj6.Size = UDim2.new(DefaultScale, 0, 1, 0)
 					pcall(Action, Value)
 				else
 					obj4.Text = tostring(st)
@@ -1387,21 +1439,24 @@ function library:AddWindow(text)
 				TweenService:Create(obj8, TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(115, 115, 115)}):Play()
 				obj4.TextXAlignment = Enum.TextXAlignment.Right
 
-				Value = ((((Max - Min) / 244) * obj6.AbsoluteSize.X) + Min)
+				Value = Min + (Max - Min) * obj6.Size.X.Scale
 				TweenService:Create(obj4, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 
-				obj6.Size = UDim2.new(0, math.clamp(mouse.X - obj6.AbsolutePosition.X, 0, 244), 0, 13)
+				local scale = math.clamp((mouse.X - obj5.AbsolutePosition.X) / obj5.AbsoluteSize.X, 0, 1)
+				obj6.Size = UDim2.new(scale, 0, 1, 0)
 				local moveconnection = mouse.Move:Connect(function()
+					local scale = math.clamp((mouse.X - obj5.AbsolutePosition.X) / obj5.AbsoluteSize.X, 0, 1)
+					obj6.Size = UDim2.new(scale, 0, 1, 0)
+					Value = Min + (Max - Min) * scale
 					obj4.Text = ('%.2f'):format(Value)
-					Value = ((((Max - Min) / 244) * obj6.AbsoluteSize.X) + Min)
 					pcall(Action, Value)
-					obj6.Size = UDim2.new(0, math.clamp(mouse.X - obj6.AbsolutePosition.X, 0, 244), 0, 13)
 				end)
 				local releaseconnection = uis.InputEnded:Connect(function(Mouse)
 					if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
-						Value = ((((Max - Min) / 244) * obj6.AbsoluteSize.X) + Min)
+						local scale = math.clamp((mouse.X - obj5.AbsolutePosition.X) / obj5.AbsoluteSize.X, 0, 1)
+						obj6.Size = UDim2.new(scale, 0, 1, 0)
+						Value = Min + (Max - Min) * scale
 						pcall(Action, Value)
-						obj6.Size = UDim2.new(0, math.clamp(mouse.X - obj6.AbsolutePosition.X, 0, 244), 0, 13)
 						moveconnection:Disconnect()
 						releaseconnection:Disconnect()
 					end
