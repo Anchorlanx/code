@@ -25,6 +25,15 @@ function library:add_corner(obj, radius)
     return UICorner
 end
 
+function library:add_stroke(obj, color, thickness)
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Color = color or Color3.fromRGB(255,255,255)
+    UIStroke.Thickness = thickness or 1
+    UIStroke.Transparency = 0
+    UIStroke.Parent = obj
+    return UIStroke
+end
+
 local text_service = game:GetService("TextService")
 function library:get_text_size(...)
     return text_service:GetTextSize(...)
@@ -151,18 +160,6 @@ function library.new(library_title, cfg_location)
 		syn.protect_gui(ScreenGui)
 	end
 
-    local Cursor = library:create("ImageLabel", {
-        Name = "Cursor",
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 17, 0, 17),
-        Image = "rbxassetid://7205257578",
-        ZIndex = 6969,
-    }, ScreenGui)
-
-    rs.RenderStepped:Connect(function()
-        Cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y + 36)
-    end)
-
 	ScreenGui.Parent = game:GetService("CoreGui")
 
     function menu.IsOpen()
@@ -177,21 +174,18 @@ function library.new(library_title, cfg_location)
 
 		ScreenGui.Enabled = not ScreenGui.Enabled
         menu.open = ScreenGui.Enabled
-
-        while ScreenGui.Enabled do
-            uis.MouseIconEnabled = true
-            rs.RenderStepped:Wait()
-        end
 	end)
 
-    local ImageLabel = library:create("Frame", {
+    local ImageLabel = library:create("ImageButton", {
         Name = "Main",
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Color3.fromRGB(15, 15, 15),
         BorderColor3 = Color3.fromRGB(78, 93, 234),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 700, 0, 500),
-        BorderSizePixel = 1,
+        Image = "http://www.roblox.com/asset/?id=7300333488",
+        AutoButtonColor = false,
+        Modal = true,
     }, ScreenGui)
     library:add_corner(ImageLabel, 8)
 
@@ -259,6 +253,7 @@ function library.new(library_title, cfg_location)
             Image = tab_image,
             ImageColor3 = Color3.fromRGB(100, 100, 100),
         }, TabButton)
+        local stroke = library:add_stroke(TabImage, Color3.fromRGB(100, 100, 100))
 
         local TabSections = Instance.new("Frame")
         local TabFrames = Instance.new("Frame")
@@ -295,6 +290,7 @@ function library.new(library_title, cfg_location)
             selected_tab = TabButton
 
             TabImage.ImageColor3 = Color3.fromRGB(84, 101, 255)
+            stroke.Color = Color3.fromRGB(84, 101, 255)
             Tab.Visible = true
         end
 
@@ -305,6 +301,7 @@ function library.new(library_title, cfg_location)
                 if not TButtons:IsA("TextButton") then continue end
 
                 library:tween(TButtons.ImageLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)})
+                TButtons.ImageLabel.UIStroke.Color = Color3.fromRGB(100, 100, 100)
             end
             for _,Tab in pairs (Tabs:GetChildren()) do
                 Tab.Visible = false
@@ -312,16 +309,19 @@ function library.new(library_title, cfg_location)
             Tab.Visible = true
             selected_tab = TabButton
             library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(84, 101, 255)})
+            library:tween(stroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(84, 101, 255)})
         end)
         TabButton.MouseEnter:Connect(function()
             if selected_tab == TabButton then return end
 
             library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 255, 255)})
+            library:tween(stroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(255, 255, 255)})
         end)
         TabButton.MouseLeave:Connect(function()
             if selected_tab == TabButton then return end
 
             library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)})
+            library:tween(stroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(100, 100, 100)})
         end)
 
         local is_first_section = true
@@ -1253,6 +1253,7 @@ function library.new(library_title, cfg_location)
                                 Text = "",
                                 ZIndex = 2,
                             }, DropdownScroll)
+                            library:add_corner(Button, 4)
 
                             local ButtonText = library:create("TextLabel", {
                                 Name = "ButtonText",
@@ -1504,6 +1505,7 @@ function library.new(library_title, cfg_location)
                                 Text = "",
                                 ZIndex = 2,
                             }, DropdownScroll)
+                            library:add_corner(Button, 4)
 
                             local ButtonText = library:create("TextLabel", {
                                 Name = "ButtonText",
